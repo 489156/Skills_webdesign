@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>UNDERSTUDY · Handover Cockpit</title>
+<style>
+/* ── tokens ──────────────────────────────────────────────────────────────── */
+:root{
+  --paper:#edeeea; --panel:#f8f8f5; --raise:#ffffff;
+  --ink:#1a2029; --muted:#576069; --faint:#868f95;
+  --line:rgba(26,32,41,.14); --line-soft:rgba(26,32,41,.07);
+  --accent:#0e6e6e; --on-accent:#f8f8f5;
+  --critical:#b4472e; --watch:#b5872a;
+  --font-display:ui-serif,Georgia,"Times New Roman",serif;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-data:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#101413; --panel:#171c1c; --raise:#1d2323;
+    --ink:#e4e8e6; --muted:#939d9c; --faint:#6f7a79;
+    --line:rgba(228,232,230,.15); --line-soft:rgba(228,232,230,.07);
+    --accent:#37b3ae; --on-accent:#101413;
+    --critical:#dd7a63; --watch:#d5a851;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="light"]{
+  --paper:#edeeea; --panel:#f8f8f5; --raise:#ffffff;
+  --ink:#1a2029; --muted:#576069; --faint:#868f95;
+  --line:rgba(26,32,41,.14); --line-soft:rgba(26,32,41,.07);
+  --accent:#0e6e6e; --on-accent:#f8f8f5;
+  --critical:#b4472e; --watch:#b5872a;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#101413; --panel:#171c1c; --raise:#1d2323;
+  --ink:#e4e8e6; --muted:#939d9c; --faint:#6f7a79;
+  --line:rgba(228,232,230,.15); --line-soft:rgba(228,232,230,.07);
+  --accent:#37b3ae; --on-accent:#101413;
+  --critical:#dd7a63; --watch:#d5a851;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-width:320px;background:var(--paper);color:var(--ink);
+  font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:1px}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.label{
+  font-family:var(--font-data);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);
+}
+.shell{max-width:1420px;margin:0 auto;padding:0 20px}
+
+/* ── masthead ────────────────────────────────────────────────────────────── */
+.masthead{display:flex;align-items:center;gap:22px;flex-wrap:wrap;padding:15px 0 13px}
+.mark{display:flex;align-items:baseline;gap:9px}
+.mark b{font-family:var(--font-data);font-size:14px;font-weight:700;letter-spacing:.14em}
+.mark em{font-style:normal;font-family:var(--font-data);font-size:10px;letter-spacing:.12em;color:var(--faint)}
+.deal{display:flex;align-items:baseline;gap:10px;padding-left:22px;border-left:1px solid var(--line)}
+.deal b{font-family:var(--font-display);font-size:16px;font-weight:600}
+.deal span{font-family:var(--font-data);font-size:11px;color:var(--muted)}
+.clock{margin-left:auto;display:flex;align-items:center;gap:18px}
+.clock .big{font-family:var(--font-data);font-size:13px;letter-spacing:.02em}
+.clock .big b{font-size:17px}
+.ghost{
+  border:1px solid var(--line);background:var(--panel);padding:6px 11px;border-radius:2px;
+  font-family:var(--font-data);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  transition:border-color .16s ease,color .16s ease;
+}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tab{
+  padding:9px 15px;font-family:var(--font-data);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:color .16s ease;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab small{display:block;text-transform:none;letter-spacing:0;font-size:10px;color:var(--faint);margin-top:2px}
+
+/* ── view A ──────────────────────────────────────────────────────────────── */
+.cockpit{display:grid;grid-template-columns:236px minmax(0,1fr) 304px;align-items:start}
+.index{border-right:1px solid var(--line);padding:24px 22px 46px 0}
+.centre{padding:24px 24px 46px}
+.rail{border-left:1px solid var(--line);padding:24px 0 46px 24px}
+
+h2.sec{
+  margin:0 0 14px;font-family:var(--font-data);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;font-weight:700;
+}
+.domains{list-style:none;margin:0;padding:0}
+.domains li+li{margin-top:3px}
+.dom{
+  display:block;width:100%;padding:8px 9px;border-radius:2px;border:1px solid transparent;
+  transition:background .16s ease;
+}
+.dom:hover{background:var(--panel)}
+.dom[aria-pressed="true"]{background:var(--panel);border-color:var(--line)}
+.dom .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dom .top b{font-weight:500;font-size:12.5px}
+.dom .top span{font-family:var(--font-data);font-size:11px;color:var(--muted)}
+.bar{display:block;height:4px;background:var(--line-soft);margin-top:7px;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent);display:block}
+.dom[data-risk="critical"] .bar i{background:var(--critical)}
+.dom[data-risk="watch"] .bar i{background:var(--watch)}
+.dom .gaps{
+  display:block;margin-top:6px;font-family:var(--font-data);font-size:10px;
+  letter-spacing:.06em;color:var(--faint);
+}
+.reset{margin-top:14px;font-family:var(--font-data);font-size:10.5px;color:var(--accent);letter-spacing:.06em}
+
+/* hero */
+.hero{border-bottom:1px solid var(--line);padding-bottom:22px}
+.hero .label{display:block;margin-bottom:14px}
+.figure{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.figure .pct{
+  font-family:var(--font-display);font-size:clamp(52px,7vw,86px);line-height:.85;
+  letter-spacing:-.03em;font-weight:600;
+}
+.figure .pct sup{font-size:.34em;font-weight:400;vertical-align:super;margin-left:2px}
+.figure p{margin:0 0 6px;max-width:34ch;color:var(--muted);font-size:13px}
+.spine{display:flex;gap:2px;margin-top:26px}
+.spine div{flex:1;height:30px;background:var(--line-soft);position:relative;overflow:hidden}
+.spine div i{position:absolute;inset:auto 0 0 0;background:var(--accent);display:block}
+.spine div[data-risk="critical"] i{background:var(--critical)}
+.spine div[data-risk="watch"] i{background:var(--watch)}
+.spinecap{display:flex;justify-content:space-between;gap:14px;margin-top:9px}
+
+/* gaps */
+.gapbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 0 10px}
+.gapbar .count{margin-left:auto;order:9;font-family:var(--font-data);font-size:11px;color:var(--faint)}
+.gaplist{list-style:none;margin:0;padding:0}
+.gap{
+  display:grid;grid-template-columns:3px minmax(0,1fr) 78px 116px;gap:14px;align-items:center;
+  width:100%;padding:13px 10px;margin-left:-10px;width:calc(100% + 10px);
+  border-bottom:1px solid var(--line-soft);transition:background .16s ease;
+}
+.gap:first-child{border-top:1px solid var(--line)}
+.gap:hover{background:var(--panel)}
+.gap>i{align-self:stretch;min-height:34px;background:var(--watch)}
+.gap[data-risk="critical"]>i{background:var(--critical)}
+.gap .what{min-width:0}
+.gap .what b{display:block;font-weight:600;font-size:13.5px;letter-spacing:-.005em}
+.gap .what .src{
+  display:block;margin-top:5px;font-family:var(--font-data);font-size:10.5px;color:var(--faint);
+}
+.gap .what .src em{font-style:normal;color:var(--critical)}
+.gap .money{font-family:var(--font-data);font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right}
+.add{
+  justify-self:end;width:100%;text-align:center;border:1px solid var(--line);background:var(--raise);padding:6px 10px;border-radius:2px;
+  font-family:var(--font-data);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;transition:all .16s ease;
+}
+.gap:hover .add{border-color:var(--accent);color:var(--accent)}
+.add[data-on="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.none{padding:30px 0;color:var(--muted);font-family:var(--font-data);font-size:12px}
+
+/* rail */
+.card{border:1px solid var(--line);background:var(--panel);padding:15px;border-radius:2px}
+.card+.card{margin-top:18px}
+.card .label{display:block;margin-bottom:9px}
+.card h3{margin:0;font-family:var(--font-display);font-size:16.5px;font-weight:600;letter-spacing:-.01em}
+.when{font-family:var(--font-data);font-size:11.5px;color:var(--muted);margin-top:5px}
+.agenda{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:16px 1fr;gap:9px;font-size:12.5px;line-height:1.4}
+.agenda .n{font-family:var(--font-data);font-size:10px;color:var(--faint);padding-top:2px}
+.agenda .fill{color:var(--faint);font-style:italic}
+.solid{
+  display:block;width:100%;margin-top:13px;background:var(--accent);color:var(--on-accent);
+  padding:9px;border-radius:2px;text-align:center;font-family:var(--font-data);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:700;transition:opacity .16s ease;
+}
+.solid:hover{opacity:.87}
+.solid[data-sent="true"]{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.risk{border-color:color-mix(in srgb,var(--critical) 45%,var(--line));background:transparent}
+.risk .label{color:var(--critical)}
+.risk p{margin:0;font-family:var(--font-display);font-size:14.5px;line-height:1.45}
+.risk .num{font-family:var(--font-data);font-weight:700}
+.risk ul{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:12px;color:var(--muted)}
+.risk li{display:flex;gap:8px}
+.risk li span{font-family:var(--font-data);color:var(--ink);margin-left:auto}
+.consent{font-family:var(--font-data);font-size:10px;line-height:1.6;color:var(--faint);letter-spacing:.03em}
+
+/* ── view B ──────────────────────────────────────────────────────────────── */
+.session{display:grid;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
+.stream{padding:24px 26px 46px 0;border-right:1px solid var(--line)}
+.extract{padding:24px 0 46px 26px}
+.live{display:flex;align-items:center;gap:11px;margin-bottom:20px;flex-wrap:wrap}
+.live .rec{width:8px;height:8px;border-radius:50%;background:var(--critical);animation:blip 2s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.25}}
+.live b{font-family:var(--font-data);font-size:11.5px;letter-spacing:.06em}
+.live .who{margin-left:auto;font-family:var(--font-data);font-size:10.5px;color:var(--faint)}
+.turn{display:grid;grid-template-columns:54px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+.turn .t{font-family:var(--font-data);font-size:10.5px;color:var(--faint);padding-top:4px}
+.turn .said{margin:0}
+.turn .said b{display:block;font-family:var(--font-data);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.turn[data-voice="owner"] .said p{
+  margin:0;font-family:var(--font-display);font-size:16px;line-height:1.5;
+}
+.turn[data-voice="agent"] .said p{margin:0;color:var(--muted);font-size:13.5px}
+.turn mark{background:color-mix(in srgb,var(--accent) 20%,transparent);color:inherit;padding:0 2px}
+
+.fact{border:1px solid var(--line);background:var(--panel);padding:13px;border-radius:2px}
+.fact+.fact{margin-top:12px}
+.fact .label{display:block;margin-bottom:7px}
+.fact p{margin:0;font-size:13.5px;line-height:1.45}
+.fact .prov{margin-top:9px;font-family:var(--font-data);font-size:10px;color:var(--faint);letter-spacing:.04em}
+.acts{display:flex;gap:7px;margin-top:11px}
+.acts button{
+  flex:1;border:1px solid var(--line);background:var(--raise);padding:7px;border-radius:2px;
+  text-align:center;font-family:var(--font-data);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);transition:all .16s ease;
+}
+.acts .yes:hover{border-color:var(--accent);color:var(--accent)}
+.acts .no:hover{border-color:var(--critical);color:var(--critical)}
+.fact[data-state="confirmed"]{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.fact[data-state="confirmed"] .acts{display:none}
+.fact[data-state="confirmed"]::after{
+  content:"Confirmed by Bud Kessler · written to the prompt book";
+  display:block;margin-top:11px;font-family:var(--font-data);font-size:10px;
+  letter-spacing:.05em;color:var(--accent);
+}
+.fact[data-state="flagged"]{border-color:color-mix(in srgb,var(--critical) 45%,var(--line))}
+.fact[data-state="flagged"] .acts{display:none}
+.fact[data-state="flagged"]::after{
+  content:"Flagged for correction · queued for session 13";
+  display:block;margin-top:11px;font-family:var(--font-data);font-size:10px;
+  letter-spacing:.05em;color:var(--critical);
+}
+.guard{
+  margin-top:20px;padding:13px;border:1px dashed var(--line);border-radius:2px;
+  font-size:12.5px;color:var(--muted);line-height:1.5;
+}
+.guard b{display:block;font-family:var(--font-data);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+
+/* ── view C ──────────────────────────────────────────────────────────────── */
+.crew{display:grid;grid-template-columns:340px minmax(0,1fr);gap:44px;padding:30px 0 50px;align-items:start}
+.phone{
+  border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px;
+  box-shadow:0 1px 0 var(--line);
+}
+.phone .bar{height:auto;background:none;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+.phone .bar span{font-family:var(--font-data);font-size:10px;color:var(--faint);letter-spacing:.08em}
+.ask{
+  border:1px solid var(--line);background:var(--raise);padding:11px;border-radius:2px;
+  font-size:13.5px;color:var(--ink);
+}
+.ask b{display:block;font-family:var(--font-data);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+.answer{margin-top:12px;border-left:2px solid var(--accent);padding:2px 0 2px 12px}
+.answer p{margin:0;font-family:var(--font-display);font-size:15.5px;line-height:1.45}
+.answer .prov{margin-top:9px;font-family:var(--font-data);font-size:10px;color:var(--faint)}
+.play{
+  margin-top:11px;display:flex;align-items:center;gap:9px;border:1px solid var(--line);
+  background:var(--panel);padding:8px 10px;border-radius:2px;width:100%;
+  font-family:var(--font-data);font-size:10.5px;letter-spacing:.06em;color:var(--muted);
+}
+.play:hover{border-color:var(--accent);color:var(--accent)}
+.play i{width:0;height:0;border-left:7px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.wave{margin-left:auto;display:flex;gap:2px;align-items:flex-end;height:14px}
+.wave b{display:block;width:2px;background:currentColor;opacity:.5}
+.why h3{margin:0 0 14px;font-family:var(--font-display);font-size:clamp(21px,2.4vw,27px);line-height:1.2;font-weight:600;letter-spacing:-.02em;text-wrap:balance;max-width:26ch}
+.why p{margin:0 0 14px;max-width:62ch;color:var(--muted);font-size:13.5px}
+.why ol{margin:0;padding:0;list-style:none;display:grid;gap:14px;max-width:62ch}
+.why li{display:grid;grid-template-columns:22px 1fr;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
+.why li .n{font-family:var(--font-data);font-size:10.5px;color:var(--faint);padding-top:3px}
+.why li b{display:block;font-size:13.5px}
+.why li span{color:var(--muted);font-size:13px}
+
+/* ── footer ──────────────────────────────────────────────────────────────── */
+.foot{
+  border-top:1px solid var(--line);padding:16px 0 32px;display:flex;gap:22px;flex-wrap:wrap;
+  font-family:var(--font-data);font-size:10.5px;color:var(--faint);letter-spacing:.04em;
+}
+.foot b{color:var(--muted);font-weight:400}
+
+/* ── responsive ──────────────────────────────────────────────────────────── */
+@media (max-width:1140px){
+  .cockpit{grid-template-columns:220px minmax(0,1fr)}
+  .rail{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:24px 0 46px}
+  .rail .wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+  .rail .card+.card{margin-top:0}
+  .session{grid-template-columns:1fr}
+  .stream{border-right:0;padding:24px 0 26px}
+  .extract{border-top:1px solid var(--line);padding:24px 0 46px}
+  .crew{grid-template-columns:1fr;gap:30px}
+  .phone{max-width:360px}
+}
+@media (max-width:780px){
+  .cockpit{grid-template-columns:1fr}
+  .centre{order:1;padding:24px 0 30px}
+  .index{order:2;border-right:0;border-top:1px solid var(--line);padding:24px 0 26px}
+  .rail{order:3}
+  .rail .wrap{grid-template-columns:1fr}
+  .rail .card+.card{margin-top:18px}
+  .deal{padding-left:0;border-left:0;width:100%}
+  .clock{margin-left:0;width:100%}
+  .gap{grid-template-columns:3px minmax(0,1fr) auto;gap:11px}
+  .gap .money,.money-label{display:none}
+  .gap{grid-template-columns:3px minmax(0,1fr) 116px}
+  .turn{grid-template-columns:44px minmax(0,1fr);gap:11px}
+  .tab{padding:9px 11px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <div class="mark"><b>UNDERSTUDY</b><em>Handover Cockpit</em></div>
+    <div class="deal">
+      <b>Kessler Heating &amp; Cooling</b>
+      <span>Grove City OH · 11 crew · closed 25 Jun 2026</span>
+    </div>
+    <div class="clock">
+      <span class="big">Day <b class="num">34</b> of 90</span>
+      <span class="label">Seller note transition ends 23 Sep</span>
+      <button class="ghost" id="theme">Theme</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Handover views">
+    <button class="tab" role="tab" id="t-book" aria-controls="v-book" aria-selected="true">
+      Prompt book<small>What is captured, what is still in one head</small></button>
+    <button class="tab" role="tab" id="t-session" aria-controls="v-session" aria-selected="false">
+      Capture session<small>Session 11 · in progress</small></button>
+    <button class="tab" role="tab" id="t-crew" aria-controls="v-crew" aria-selected="false">
+      Crew view<small>What a tech sees at the truck</small></button>
+  </div>
+
+  <!-- ═══ VIEW A · PROMPT BOOK ═══════════════════════════════════════════ -->
+  <section id="v-book" role="tabpanel" aria-labelledby="t-book">
+    <div class="cockpit">
+
+      <aside class="index">
+        <h2 class="sec">Operating domains</h2>
+        <ul class="domains" id="domains"></ul>
+        <button class="reset" id="reset" hidden>Clear filter — show all gaps</button>
+      </aside>
+
+      <section class="centre">
+        <div class="hero">
+          <span class="label">Continuity coverage · verified against Bud Kessler</span>
+          <div class="figure">
+            <span class="pct num" id="pct">61<sup>%</sup></span>
+            <p>of the operating knowledge this business runs on is written down,
+               sourced, and confirmed by the person leaving.</p>
+          </div>
+          <div class="spine" id="spine" aria-hidden="true"></div>
+          <div class="spinecap">
+            <span class="label">Weighted by revenue exposure, not by page count</span>
+            <span class="label" id="spinecount">—</span>
+          </div>
+        </div>
+
+        <div class="gapbar">
+          <span class="label" id="gaptitle">Highest-risk gaps</span>
+          <span class="label money-label">Revenue exposed</span>
+          <span class="count num" id="gapcount">—</span>
+        </div>
+        <ul class="gaplist" id="gaps"></ul>
+        <p class="none" id="nogaps" hidden>No open gaps in this domain. It is fully handed over.</p>
+      </section>
+
+      <aside class="rail">
+        <div class="wrap">
+          <div class="card">
+            <span class="label">Next capture session</span>
+            <h3>Session 12 · with Bud</h3>
+            <p class="when">Thu 30 Jul · 07:10 · 22 min · phone call</p>
+            <ol class="agenda" id="agenda"></ol>
+            <button class="solid" id="send" data-sent="false">Send agenda to Bud</button>
+          </div>
+
+          <div class="card risk">
+            <span class="label">If Bud stops answering tomorrow</span>
+            <p><span class="num">$672K</span> of annual revenue depends on things
+               that exist only in one man's memory.</p>
+            <ul>
+              <li>Uncaptured share of operating brain <span class="num">39%</span></li>
+              <li>Days left on the seller note <span class="num">54</span></li>
+              <li>Sessions booked <span class="num">3</span></li>
+              <li>Minutes of his time still owed <span class="num">240</span></li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <span class="label">How this is recorded</span>
+            <p class="consent">
+              Bud consented on 26 Jun and can end any session, delete any answer, and
+              revoke a recording for 30 days after it is made.<br><br>
+              We capture how the business runs. We do not capture opinions about named
+              employees, health, family, or finances outside the business.<br><br>
+              Every fact in the prompt book carries the session and timecode it came from.
+              Nothing enters the book unconfirmed.
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══ VIEW B · CAPTURE SESSION ═══════════════════════════════════════ -->
+  <section id="v-session" role="tabpanel" aria-labelledby="t-session" hidden>
+    <div class="session">
+      <div class="stream">
+        <div class="live">
+          <i class="rec"></i><b>SESSION 11 · 14:22 / 22:00</b>
+          <span class="who">Bud Kessler (owner, 31 yr) · Cal Whitmore (buyer) · Understudy agent</span>
+        </div>
+
+        <div class="turn" data-voice="agent">
+          <span class="t num">11:48</span>
+          <div class="said"><b>Understudy</b>
+            <p>Bud, the Mercy Clinic account is your third largest. Cal's crew went out
+               Tuesday and couldn't hold pressure on boiler two. What should they know?</p></div>
+        </div>
+
+        <div class="turn" data-voice="owner">
+          <span class="t num">11:59</span>
+          <div class="said"><b>Bud Kessler</b>
+            <p>Ah — that one's mine. <mark>Back in oh-nine the return line was undersized
+               and the GC wouldn't pay to redo it</mark>, so I put a bypass in above the
+               ceiling tile, west side of the mechanical room. It's not on any drawing.
+               <mark>You have to close the bypass before you pressure test or you'll chase
+               your tail all day.</mark> Ray knows. Nobody else does.</p></div>
+        </div>
+
+        <div class="turn" data-voice="agent">
+          <span class="t num">12:31</span>
+          <div class="said"><b>Understudy</b>
+            <p>Understood. Is there anything else in that building that isn't on a drawing?</p></div>
+        </div>
+
+        <div class="turn" data-voice="owner">
+          <span class="t num">12:39</span>
+          <div class="said"><b>Bud Kessler</b>
+            <p>The rooftop unit over the east wing, we never replaced the economizer,
+               we just <mark>locked the damper open in spring and shut in October</mark>.
+               Facilities knows. It's on my calendar every year, first week of April.</p></div>
+        </div>
+
+        <div class="turn" data-voice="agent">
+          <span class="t num">13:04</span>
+          <div class="said"><b>Understudy</b>
+            <p>I've written both to the book and flagged the April date to Cal's calendar.
+               Next: the fourteen commercial accounts on handshake pricing.</p></div>
+        </div>
+      </div>
+
+      <aside class="extract">
+        <h2 class="sec">Extracted this session · 4</h2>
+
+        <div class="fact" data-state="pending">
+          <span class="label">Site quirk · Mercy Clinic</span>
+          <p>Boiler 2 has an undocumented bypass above the ceiling tile, west side of the
+             mechanical room, installed 2009 because the return line is undersized.
+             <b>Close the bypass before any pressure test.</b></p>
+          <p class="prov">Session 11 · 11:59 · Bud Kessler · also known by Ray Alvarez</p>
+          <div class="acts">
+            <button class="yes">Bud confirms</button>
+            <button class="no">Needs correction</button>
+          </div>
+        </div>
+
+        <div class="fact" data-state="pending">
+          <span class="label">Recurring task · Mercy Clinic</span>
+          <p>Rooftop unit, east wing: economizer never replaced. Damper is locked open
+             the first week of April and shut in October. Facilities is aware.</p>
+          <p class="prov">Session 11 · 12:39 · Bud Kessler · becomes a recurring work order</p>
+          <div class="acts">
+            <button class="yes">Bud confirms</button>
+            <button class="no">Needs correction</button>
+          </div>
+        </div>
+
+        <div class="fact" data-state="confirmed">
+          <span class="label">Vendor rule · Sanderson Supply</span>
+          <p>Sanderson holds a 22% trade discount that was never papered. It is tied to
+             Bud personally and needs re-confirming with Dale at the branch before October.</p>
+          <p class="prov">Session 11 · 06:12 · Bud Kessler · action assigned to Cal</p>
+        </div>
+
+        <div class="guard">
+          <b>Guardrail held twice this session</b>
+          At 09:41 Bud began describing a technician's divorce and reliability. The agent
+          stopped the recording, did not transcribe it, and moved on. Employee performance
+          and personal circumstances stay out of the book — Cal manages his own crew.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══ VIEW C · CREW VIEW ═════════════════════════════════════════════ -->
+  <section id="v-crew" role="tabpanel" aria-labelledby="t-crew" hidden>
+    <div class="crew">
+      <div class="phone">
+        <div class="bar"><span>UNDERSTUDY · KESSLER</span><span>7:52 AM</span></div>
+        <div class="ask">
+          <b>Ray asked, out loud, from the truck</b>
+          Mercy Clinic boiler two won't hold pressure
+          <div class="answer">
+            <p>“Close the bypass above the ceiling tile, west side of the mechanical room,
+               before you pressure test. I put it in in oh-nine because the return line
+               is undersized. It's not on any drawing.”</p>
+            <p class="prov">Bud Kessler · session 11 · 11:59 · confirmed 29 Jul</p>
+          </div>
+          <button class="play"><i></i>Hear Bud say it
+            <span class="wave" aria-hidden="true"></span></button>
+        </div>
+      </div>
+
+      <div class="why">
+        <h3>The handover does not end at day 90. It becomes how the business answers itself.</h3>
+        <p>This is the same knowledge, one day later, in the only place it matters: a
+           technician standing in front of the problem at 7:52 in the morning. No typing,
+           no login, no training. He asks out loud, he gets the outgoing owner's own words
+           and the outgoing owner's own voice.</p>
+        <ol>
+          <li><span class="n num">01</span><div><b>Day 0–90 — capture</b>
+            <span>Twenty-two minute sessions, twice a week, priced into the deal.
+            Coverage goes from nothing to the high eighties.</span></div></li>
+          <li><span class="n num">02</span><div><b>Day 90 — the book is the asset</b>
+            <span>The seller note closes. The knowledge stays, sourced and timecoded,
+            and it transfers again if the business is ever sold.</span></div></li>
+          <li><span class="n num">03</span><div><b>Day 90 onward — the operating layer</b>
+            <span>Every answer the crew pulls is a query. Every query tells us what
+            the business actually needs next. That is the subscription, and that is
+            the moat: nobody else has the founder's voice.</span></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span><b>Consent:</b> recorded with the outgoing owner's signed permission, revocable for 30 days</span>
+    <span><b>Provenance:</b> every fact carries its session, timecode, and speaker</span>
+    <span><b>Out of scope:</b> employee performance, health, family, personal finances</span>
+  </footer>
+</div>
+
+<script>
+/* ── data ────────────────────────────────────────────────────────────────── */
+const DOMAINS = [
+  { id:"cust",   name:"Customers & pricing",    cov:44, weight:24, gaps:6, risk:"critical" },
+  { id:"site",   name:"Equipment & site quirks",cov:38, weight:18, gaps:9, risk:"critical" },
+  { id:"rel",    name:"Relationships & referrals",cov:29, weight:14, gaps:7, risk:"critical" },
+  { id:"cash",   name:"Cash & collections",     cov:55, weight:12, gaps:4, risk:"watch" },
+  { id:"season", name:"Seasonality & capacity", cov:47, weight:10, gaps:3, risk:"watch" },
+  { id:"vend",   name:"Vendors & parts",        cov:72, weight:9,  gaps:2, risk:"ok" },
+  { id:"crew",   name:"Crew, roles & pay",      cov:81, weight:8,  gaps:1, risk:"ok" },
+  { id:"comp",   name:"Licences & compliance",  cov:93, weight:5,  gaps:0, risk:"ok" }
+];
+
+const GAPS = [
+  { dom:"cust", risk:"critical", money:"$412K",
+    what:"14 commercial accounts priced off a handshake rate, no schedule anywhere",
+    src:"Verbal only — <em>Bud Kessler</em> · 14 accounts · renewal starts October" },
+  { dom:"rel", risk:"critical", money:"$260K",
+    what:"Four GCs send work because of Bud personally, not the company",
+    src:"Verbal only — <em>Bud Kessler</em> · no contract, no email trail" },
+  { dom:"site", risk:"critical", money:"$96K",
+    what:"Mercy Clinic boiler 2 — a 2009 bypass that appears on no drawing",
+    src:"Captured session 11 · awaiting Bud's confirmation" },
+  { dom:"cash", risk:"critical", money:"$88K",
+    what:"Three customers run 60+ days, one is never to be chased — reason unrecorded",
+    src:"Verbal only — <em>Bud Kessler</em> · $88K currently in AR" },
+  { dom:"site", risk:"watch", money:"$54K",
+    what:"Eleven rooftop units carry field mods known only to Bud and Ray",
+    src:"Partly captured · 3 of 11 documented" },
+  { dom:"season", risk:"watch", money:"$41K",
+    what:"Spring changeover — why the route starts in Grove City, not Columbus",
+    src:"Verbal only — <em>Bud Kessler</em> · affects 6 weeks of scheduling" },
+  { dom:"cust", risk:"watch", money:"$38K",
+    what:"Which two accounts get same-day service regardless of the board",
+    src:"Verbal only — <em>Bud Kessler</em>" },
+  { dom:"vend", risk:"watch", money:"$33K",
+    what:"Sanderson's 22% trade discount is tied to Bud and was never papered",
+    src:"Captured session 11 · confirmed · action open with Cal" },
+  { dom:"rel", risk:"watch", money:"$22K",
+    what:"The county inspector's preferred submittal order, learned over 19 years",
+    src:"Verbal only — <em>Bud Kessler</em>" },
+  { dom:"crew", risk:"watch", money:"—",
+    what:"Who covers on-call at Christmas — the informal rota held since 2011",
+    src:"Partly captured · needs Ray to confirm" }
+];
+
+const BASE_AGENDA = [
+  "Commercial pricing exceptions — 6 accounts remaining",
+  "Mercy Clinic: confirm the 2009 bypass and the April damper date"
+];
+
+const $ = s => document.querySelector(s);
+const state = { domain:null, agenda:new Set(), coverage:61 };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ── tabs ────────────────────────────────────────────────────────────────── */
+document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(t => {
+    const on = t === tab;
+    t.setAttribute("aria-selected", String(on));
+    $("#" + t.getAttribute("aria-controls")).hidden = !on;
+  });
+}));
+
+/* ── domain index ────────────────────────────────────────────────────────── */
+$("#domains").innerHTML = DOMAINS.map(d => `
+  <li><button class="dom" data-dom="${d.id}" data-risk="${d.risk}" aria-pressed="false">
+    <span class="top"><b>${d.name}</b><span class="num">${d.cov}%</span></span>
+    <span class="bar"><i style="width:${d.cov}%"></i></span>
+    <span class="gaps">${d.gaps ? d.gaps + " open gap" + (d.gaps > 1 ? "s" : "") : "handed over"}</span>
+  </button></li>`).join("");
+
+$("#domains").addEventListener("click", e => {
+  const btn = e.target.closest(".dom"); if (!btn) return;
+  state.domain = state.domain === btn.dataset.dom ? null : btn.dataset.dom;
+  document.querySelectorAll(".dom").forEach(b =>
+    b.setAttribute("aria-pressed", String(b.dataset.dom === state.domain)));
+  renderGaps();
+});
+
+$("#reset").addEventListener("click", () => {
+  state.domain = null;
+  document.querySelectorAll(".dom").forEach(b => b.setAttribute("aria-pressed", "false"));
+  renderGaps();
+});
+
+/* ── spine: composition weighted by revenue exposure ─────────────────────── */
+$("#spine").innerHTML = DOMAINS.map(d =>
+  `<div data-risk="${d.risk}" style="flex:${d.weight}" title="${d.name}: ${d.cov}% captured">
+     <i style="height:${d.cov}%"></i></div>`).join("");
+$("#spinecount").textContent =
+  DOMAINS.reduce((n, d) => n + d.gaps, 0) + " open gaps across 8 domains";
+
+/* ── gaps ────────────────────────────────────────────────────────────────── */
+function renderGaps(){
+  const list = state.domain ? GAPS.filter(g => g.dom === state.domain) : GAPS;
+  const dom = DOMAINS.find(d => d.id === state.domain);
+
+  $("#gaptitle").textContent = dom ? dom.name + " · open gaps" : "Highest-risk gaps";
+  $("#gapcount").textContent = state.domain
+    ? `${list.length} shown`
+    : `top ${GAPS.length} of 32 by exposure`;
+  $("#reset").hidden = !state.domain;
+  $("#nogaps").hidden = list.length > 0;
+
+  $("#gaps").innerHTML = list.map(g => {
+    const on = state.agenda.has(g.what);
+    return `<li><div class="gap" data-risk="${g.risk}">
+      <i></i>
+      <span class="what"><b>${g.what}</b><span class="src">${g.src}</span></span>
+      <span class="money">${g.money}</span>
+      <button class="add" data-gap="${encodeURIComponent(g.what)}" data-on="${on}">
+        ${on ? "On agenda" : "Add to agenda"}</button>
+    </div></li>`;
+  }).join("");
+}
+
+$("#gaps").addEventListener("click", e => {
+  const btn = e.target.closest(".add"); if (!btn) return;
+  const key = decodeURIComponent(btn.dataset.gap);
+  state.agenda.has(key) ? state.agenda.delete(key) : state.agenda.add(key);
+  renderGaps(); renderAgenda();
+});
+
+/* ── agenda ──────────────────────────────────────────────────────────────── */
+function renderAgenda(){
+  const items = [...BASE_AGENDA, ...state.agenda];
+  const room = Math.max(0, 4 - items.length);
+  $("#agenda").innerHTML =
+    items.slice(0, 5).map((t, i) =>
+      `<li><span class="n">${String(i + 1).padStart(2, "0")}</span><span>${t}</span></li>`).join("")
+    + (room ? `<li><span class="n">${String(items.length + 1).padStart(2, "0")}</span>
+        <span class="fill">${room} more slot${room > 1 ? "s" : ""} in 22 minutes —
+        add a gap from the list</span></li>` : "");
+  const send = $("#send");
+  send.dataset.sent = "false";
+  send.textContent = "Send agenda to Bud";
+}
+
+$("#send").addEventListener("click", e => {
+  const sent = e.currentTarget.dataset.sent === "true";
+  e.currentTarget.dataset.sent = String(!sent);
+  e.currentTarget.textContent = sent ? "Send agenda to Bud" : "Sent · Bud confirmed 07:10";
+});
+
+/* ── fact confirmation lifts coverage ────────────────────────────────────── */
+document.querySelectorAll(".fact .acts button").forEach(btn =>
+  btn.addEventListener("click", e => {
+    const fact = e.currentTarget.closest(".fact");
+    const yes = e.currentTarget.classList.contains("yes");
+    fact.dataset.state = yes ? "confirmed" : "flagged";
+    if (yes) {
+      state.coverage = Math.min(100, state.coverage + 2);
+      $("#pct").innerHTML = state.coverage + "<sup>%</sup>";
+    }
+  }));
+
+/* ── counter ─────────────────────────────────────────────────────────────── */
+(function(){
+  const el = $("#pct"), target = 61;
+  if (reduced) { el.innerHTML = target + "<sup>%</sup>"; return; }
+  const t0 = performance.now(), dur = 900;
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    el.innerHTML = Math.round(target * (1 - Math.pow(1 - t, 3))) + "<sup>%</sup>";
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+})();
+
+/* ── waveform decoration ─────────────────────────────────────────────────── */
+$(".wave").innerHTML = [5,9,14,7,11,4,8,13,6,10]
+  .map(h => `<b style="height:${h}px"></b>`).join("");
+
+/* ── theme ───────────────────────────────────────────────────────────────── */
+$("#theme").addEventListener("click", () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const now = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  document.documentElement.dataset.theme = now === "dark" ? "light" : "dark";
+});
+
+renderGaps();
+renderAgenda();
+</script>
+</body>
+</html>
