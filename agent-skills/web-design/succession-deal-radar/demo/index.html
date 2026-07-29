@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>OFFMARKET · Deal Radar</title>
+<style>
+/* ─── tokens ─────────────────────────────────────────────────────────────── */
+:root{
+  --ground:#e9eae4; --panel:#f6f6f2; --raise:#fdfdfa;
+  --ink:#14181f; --muted:#5a6560; --faint:#8a938d;
+  --line:rgba(20,24,21,.15); --line-soft:rgba(20,24,21,.07);
+  --accent:#14624a; --on-accent:#f6f6f2;
+  --cold:#3d6b8c; --warm:#b07c1e; --hot:#9e2b20;
+  --shadow:0 1px 0 rgba(20,24,21,.05);
+
+  --font-data:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-editorial:ui-serif,Georgia,"Times New Roman",serif;
+
+  --gut:18px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0d100e; --panel:#141815; --raise:#191e1a;
+    --ink:#e6eae3; --muted:#8a968e; --faint:#6d7972;
+    --line:rgba(230,234,227,.15); --line-soft:rgba(230,234,227,.07);
+    --accent:#45c395; --on-accent:#0d100e;
+    --cold:#6fa0c4; --warm:#d6a344; --hot:#e0705f;
+    --shadow:0 1px 0 rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="light"]{
+  --ground:#e9eae4; --panel:#f6f6f2; --raise:#fdfdfa;
+  --ink:#14181f; --muted:#5a6560; --faint:#8a938d;
+  --line:rgba(20,24,21,.15); --line-soft:rgba(20,24,21,.07);
+  --accent:#14624a; --on-accent:#f6f6f2;
+  --cold:#3d6b8c; --warm:#b07c1e; --hot:#9e2b20;
+  --shadow:0 1px 0 rgba(20,24,21,.05);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --ground:#0d100e; --panel:#141815; --raise:#191e1a;
+  --ink:#e6eae3; --muted:#8a968e; --faint:#6d7972;
+  --line:rgba(230,234,227,.15); --line-soft:rgba(230,234,227,.07);
+  --accent:#45c395; --on-accent:#0d100e;
+  --cold:#6fa0c4; --warm:#d6a344; --hot:#e0705f;
+  --shadow:0 1px 0 rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+
+/* ─── base ───────────────────────────────────────────────────────────────── */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-width:320px;background:var(--ground);color:var(--ink);
+  font-family:var(--font-ui);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:1px}
+.num{font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.label{
+  font-family:var(--font-data);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);
+}
+
+/* ─── chrome ─────────────────────────────────────────────────────────────── */
+.app{max-width:1440px;margin:0 auto;padding:0 var(--gut)}
+
+.statusbar{
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  padding:14px 0;border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:baseline;gap:9px}
+.brand b{
+  font-family:var(--font-data);font-size:15px;font-weight:700;
+  letter-spacing:.06em;
+}
+.brand em{font-style:normal;color:var(--faint);font-family:var(--font-data);font-size:10px;letter-spacing:.14em}
+.dot{
+  width:7px;height:7px;border-radius:50%;background:var(--accent);
+  align-self:center;animation:pulse 3.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.32}}
+
+.market{display:flex;align-items:center;gap:8px;margin-left:6px}
+.market select{
+  font:inherit;font-family:var(--font-data);font-size:12px;
+  color:var(--ink);background:var(--raise);
+  border:1px solid var(--line);padding:5px 8px;border-radius:2px;
+}
+.sync{margin-left:auto;display:flex;align-items:center;gap:16px}
+.sync .label{color:var(--muted)}
+.ghost{
+  border:1px solid var(--line);background:var(--raise);padding:6px 11px;
+  border-radius:2px;font-family:var(--font-data);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;transition:border-color .16s ease,color .16s ease;
+}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ─── grid ───────────────────────────────────────────────────────────────── */
+.grid{
+  display:grid;grid-template-columns:206px minmax(0,1fr) 292px;
+  gap:0;align-items:start;
+}
+.slip{border-right:1px solid var(--line);padding:22px 20px 40px 0}
+.feed{padding:22px 22px 40px}
+.queue{border-left:1px solid var(--line);padding:22px 0 40px 22px}
+
+/* ─── left: the request slip ─────────────────────────────────────────────── */
+.slip h2,.queue h2{
+  margin:0 0 14px;font-family:var(--font-data);font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+}
+.group{margin-bottom:26px}
+.group>.label{display:block;margin-bottom:9px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{
+  border:1px solid var(--line);background:transparent;color:var(--muted);
+  padding:4px 8px;border-radius:2px;font-family:var(--font-data);font-size:11px;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.chip:hover{border-color:var(--accent);color:var(--ink)}
+.chip[aria-pressed="true"]{
+  background:var(--accent);border-color:var(--accent);color:var(--on-accent);
+}
+.slider{width:100%;accent-color:var(--accent);margin:2px 0 0}
+.readout{
+  display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--font-data);font-size:12px;color:var(--muted);
+}
+.readout b{font-size:19px;color:var(--ink);letter-spacing:-.02em}
+.legend{display:grid;gap:6px;margin-top:4px}
+.legend div{display:flex;align-items:center;gap:8px;font-family:var(--font-data);font-size:11px;color:var(--muted)}
+.legend i{width:16px;height:3px;display:block}
+
+/* ─── centre: the read ───────────────────────────────────────────────────── */
+.read{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:4px}
+.read .label{display:block;margin-bottom:12px}
+.headline{
+  margin:0;font-family:var(--font-data);font-weight:400;
+  font-size:clamp(21px,2.4vw,29px);letter-spacing:-.035em;line-height:1.12;
+  text-wrap:balance;
+}
+.headline b{font-weight:700}
+.headline span{color:var(--muted)}
+.read p{max-width:64ch;margin:10px 0 0;color:var(--muted);font-size:13px}
+
+.window{display:flex;align-items:flex-end;gap:3px;height:52px;margin-top:22px}
+.window div{
+  flex:1;background:var(--line);position:relative;
+  transform-origin:bottom;animation:rise .6s cubic-bezier(.2,.9,.3,1) both;
+}
+.window div[data-heat="hot"]{background:var(--hot)}
+.window div[data-heat="warm"]{background:var(--warm)}
+.window div[data-heat="cold"]{background:var(--cold)}
+.window div span{
+  position:absolute;top:calc(100% + 5px);left:0;
+  font-family:var(--font-data);font-size:9px;letter-spacing:.08em;color:var(--faint);
+}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.windowcap{margin-top:24px;display:flex;justify-content:space-between;gap:12px}
+
+.controls{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:16px 0 10px;
+}
+.controls .label{margin-right:-6px}
+.sort{
+  font-family:var(--font-data);font-size:11px;letter-spacing:.06em;color:var(--muted);
+  padding:3px 0;border-bottom:1px solid transparent;
+}
+.sort[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.count{margin-left:auto;font-family:var(--font-data);font-size:11px;color:var(--faint)}
+
+/* rows */
+.rows{list-style:none;margin:0;padding:0}
+.rowhead,.row{
+  display:grid;
+  grid-template-columns:3px minmax(0,1fr) 64px 74px 84px 44px 78px;
+  align-items:center;gap:14px;
+  width:100%;text-align:left;
+}
+.rowhead{padding:0 10px 7px 0;border-bottom:1px solid var(--line)}
+.rowhead span{font-size:9.5px;white-space:nowrap;overflow:hidden}
+.row{
+  padding:11px 10px;margin-left:-10px;width:calc(100% + 10px);
+  border-bottom:1px solid var(--line-soft);
+  transition:background .16s ease;
+}
+.row:hover{background:var(--panel)}
+.row[aria-current="true"]{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+.stripe{align-self:stretch;background:var(--cold);min-height:32px}
+.row[data-heat="warm"] .stripe{background:var(--warm)}
+.row[data-heat="hot"] .stripe{background:var(--hot)}
+
+.who{min-width:0}
+.who b{
+  display:block;font-weight:600;font-size:13.5px;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.facts{
+  display:block;margin-top:3px;
+  font-family:var(--font-data);font-size:10.5px;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.facts em{font-style:normal;color:var(--muted)}
+.sigs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;font-family:var(--font-data);font-size:9.5px}
+.sig{
+  border:1px solid var(--line);padding:1px 4px;border-radius:2px;
+  color:var(--muted);white-space:nowrap;
+}
+.sig[data-weight="high"]{border-color:color-mix(in srgb,var(--hot) 55%,transparent);color:var(--hot)}
+
+.cell{font-family:var(--font-data);font-variant-numeric:tabular-nums;font-size:12.5px}
+.cell small{display:none;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}
+.right{text-align:right}
+
+.dial{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--heat) calc(var(--score)*1%),var(--line-soft) 0);
+  justify-self:center;
+}
+.dial i{
+  width:28px;height:28px;border-radius:50%;background:var(--ground);
+  display:grid;place-items:center;font-style:normal;
+  font-family:var(--font-data);font-size:12px;font-weight:700;
+}
+.row:hover .dial i,.row[aria-current="true"] .dial i{background:var(--panel)}
+
+.pull{
+  border:1px solid var(--line);background:var(--raise);padding:6px 9px;border-radius:2px;
+  font-family:var(--font-data);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.row:hover .pull{border-color:var(--accent);color:var(--accent)}
+.empty{padding:34px 0;color:var(--muted);font-family:var(--font-data);font-size:12px}
+
+/* ─── right: today's queue ───────────────────────────────────────────────── */
+.focus{
+  border:1px solid var(--line);background:var(--panel);padding:14px;
+  border-radius:2px;margin-bottom:22px;
+}
+.focus .label{display:block;margin-bottom:8px}
+.focus b{display:block;font-size:14.5px;letter-spacing:-.01em}
+.quote{
+  font-family:var(--font-editorial);font-style:italic;font-size:14px;
+  line-height:1.5;color:var(--muted);margin:10px 0 0;
+  padding-left:11px;border-left:2px solid var(--accent);
+}
+.script{
+  margin:12px 0 0;padding:10px;background:var(--raise);border:1px solid var(--line-soft);
+  font-family:var(--font-data);font-size:11.5px;line-height:1.65;color:var(--ink);
+  white-space:pre-wrap;border-radius:2px;
+}
+.solid{
+  display:block;width:100%;margin-top:10px;background:var(--accent);color:var(--on-accent);
+  padding:9px;border-radius:2px;font-family:var(--font-data);font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+  transition:opacity .16s ease;
+}
+.solid:hover{opacity:.86}
+.solid[data-sent="true"]{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+
+.moves{list-style:none;margin:0;padding:0}
+.moves li{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.moves .n{font-family:var(--font-data);font-size:11px;color:var(--faint);padding-top:2px}
+.moves b{display:block;font-weight:600;font-size:13px}
+.moves p{margin:4px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+.moves .done b{color:var(--faint);text-decoration:line-through}
+
+.funnel{margin-top:22px;display:grid;gap:7px}
+.funnel div{display:flex;align-items:center;gap:10px;font-family:var(--font-data);font-size:11px;color:var(--muted)}
+.funnel i{height:9px;background:var(--accent);display:block;opacity:.85}
+.funnel span{margin-left:auto;color:var(--ink)}
+
+/* ─── footer ─────────────────────────────────────────────────────────────── */
+.legal{
+  border-top:1px solid var(--line);padding:16px 0 30px;
+  display:flex;gap:20px;flex-wrap:wrap;color:var(--faint);
+  font-family:var(--font-data);font-size:10.5px;letter-spacing:.04em;
+}
+.legal b{color:var(--muted);font-weight:400}
+
+/* ─── responsive ─────────────────────────────────────────────────────────── */
+@media (max-width:1120px){
+  .grid{grid-template-columns:190px minmax(0,1fr)}
+  .queue{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:22px 0 40px}
+  .feed{padding:22px 0 34px}
+  .queue .wrap{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  .rowhead,.row{grid-template-columns:3px minmax(0,1fr) 82px 88px 44px}
+  .rowhead{padding-right:4px}.row{padding-right:4px}
+  .hide-md{display:none}
+}
+@media (max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .feed{order:1}.slip{order:2}.queue{order:3}
+  .slip{border-right:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0 24px}
+  .feed{padding:22px 0 30px}
+  .queue .wrap{grid-template-columns:1fr}
+  .rowhead{display:none}
+  .row{grid-template-columns:3px minmax(0,1fr) 82px 44px;gap:12px;align-items:start}
+  .hide-sm{display:none}
+  .cell small{display:block}
+  .cell{padding-top:2px}
+  .sync{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="statusbar">
+    <div class="brand"><i class="dot"></i><b>OFFMARKET</b><em>Deal Radar</em></div>
+    <div class="market">
+      <span class="label">Market</span>
+      <select id="market" aria-label="Search market">
+        <option>Columbus OH · 60 mi</option>
+        <option>Greenville SC · 45 mi</option>
+        <option>Boise ID · 75 mi</option>
+      </select>
+    </div>
+    <div class="sync">
+      <span class="label">County records synced 06:12 · 41 sources</span>
+      <button class="ghost" id="theme" aria-label="Switch colour theme">Theme</button>
+      <button class="ghost">Export list</button>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ── request slip ────────────────────────────────────────────────── -->
+    <aside class="slip">
+      <h2>Search filter</h2>
+
+      <div class="group">
+        <span class="label">Trade</span>
+        <div class="chips" id="trades"></div>
+      </div>
+
+      <div class="group">
+        <span class="label">Succession score, minimum</span>
+        <input class="slider" type="range" id="score" min="40" max="95" value="62" aria-label="Minimum succession score">
+        <div class="readout"><b class="num" id="scoreOut">62</b><span>of 100</span></div>
+      </div>
+
+      <div class="group">
+        <span class="label">Max asking multiple</span>
+        <input class="slider" type="range" id="mult" min="20" max="45" value="40" aria-label="Maximum asking multiple of seller earnings">
+        <div class="readout"><b class="num" id="multOut">4.0×</b><span>SDE</span></div>
+      </div>
+
+      <div class="group">
+        <span class="label">Heat scale</span>
+        <div class="legend">
+          <div><i style="background:var(--hot)"></i>Sells inside 12 months</div>
+          <div><i style="background:var(--warm)"></i>12–24 months</div>
+          <div><i style="background:var(--cold)"></i>Watch list</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── feed ────────────────────────────────────────────────────────── -->
+    <section class="feed">
+      <div class="read">
+        <span class="label">Modeled estimate · Columbus OH, 60 mi</span>
+        <h1 class="headline"><b class="num" id="big">0</b> owners <span>are within reach of exit,<br>and none of them are listed yet.</span></h1>
+        <p>Every one of these businesses is profitable, unlisted, and run by someone who filed their first
+           licence before you finished school. Brokers reach them at the auction. You reach them at the kitchen table.</p>
+
+        <div class="window" id="window" aria-hidden="true"></div>
+        <div class="windowcap">
+          <span class="label">Modeled sell window, next 18 months</span>
+          <span class="label">n = 1,284 · public records only</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span class="label">Sort</span>
+        <button class="sort" data-sort="score" aria-pressed="true">Succession score</button>
+        <button class="sort" data-sort="sde" aria-pressed="false">Seller earnings</button>
+        <button class="sort" data-sort="tenure" aria-pressed="false">Owner tenure</button>
+        <span class="count num" id="count">—</span>
+      </div>
+
+      <div class="rowhead" aria-hidden="true">
+        <span></span>
+        <span class="label">Business &amp; record signals</span>
+        <span class="label hide-sm hide-md">Tenure</span>
+        <span class="label hide-sm right">Revenue</span>
+        <span class="label right">Earnings</span>
+        <span class="label" style="text-align:center">Score</span>
+        <span class="label hide-sm hide-md"></span>
+      </div>
+
+      <ol class="rows" id="rows"></ol>
+      <p class="empty" id="empty" hidden>No owners match this filter. Widen the score or the multiple.</p>
+    </section>
+
+    <!-- ── queue ───────────────────────────────────────────────────────── -->
+    <aside class="queue">
+      <div class="wrap">
+        <div>
+          <h2>Selected</h2>
+          <div class="focus">
+            <span class="label" id="focusTag">Highest score today</span>
+            <b id="focusName">—</b>
+            <p class="quote" id="focusWhy">—</p>
+            <pre class="script" id="focusScript">—</pre>
+            <button class="solid" id="send" data-sent="false">Send first touch</button>
+          </div>
+        </div>
+
+        <div>
+          <h2>Today · 3 moves</h2>
+          <ol class="moves">
+            <li><span class="n num">01</span><div><b>Call 4 owners at 7:10am</b><p>Before the crews roll. Owner picks up their own line 68% of the time at that hour.</p></div></li>
+            <li><span class="n num">02</span><div><b>Post the one-pager to the county trade group</b><p>“Local buyer, keeping the name and the crew.” That sentence outperforms every price offer.</p></div></li>
+            <li class="done"><span class="n num">03</span><div><b>Pull 3 UCC filings on Fairfield County HVAC</b><p>Liens tell you who is already leveraged and who owns their fleet outright.</p></div></li>
+          </ol>
+
+          <div class="funnel">
+            <div><i style="width:96px"></i>Touched<span class="num">128</span></div>
+            <div><i style="width:52px"></i>Replied<span class="num">19</span></div>
+            <div><i style="width:26px"></i>Met<span class="num">7</span></div>
+            <div><i style="width:9px"></i>Under LOI<span class="num">2</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="legal">
+    <span><b>Sources:</b> state licence registries, county permits, UCC filings, DBA records, fleet titles</span>
+    <span><b>Never:</b> personal addresses, home phones, family records, scraped social profiles</span>
+    <span><b>Opt-out:</b> honoured within 24h, permanently, across every buyer on the platform</span>
+  </footer>
+</div>
+
+<script>
+const DEALS = [
+  { name:"H——— Heating & Cooling", city:"Grove City", trade:"HVAC", est:1978, tenure:34,
+    rev:4.2, sde:0.92, mult:3.1, score:91, heat:"hot",
+    sigs:[["Licence renewed 1-yr, not 3-yr","high"],["Sole officer since 1991",""],["No hire posted in 26 mo",""]],
+    why:"Renewed his contractor licence for one year instead of three. Nobody plans a decade with a 12-month licence.",
+    script:"Mr. H—— — I buy HVAC companies in Franklin County and\nkeep the name on the trucks. Not a broker, not a roll-up.\nIf you ever think about slowing down, I'd like to be the\nfirst call. 15 minutes at your shop, any morning." },
+
+  { name:"V——— Septic & Pumping", city:"Lancaster", trade:"Septic", est:1984, tenure:29,
+    rev:2.8, sde:0.71, mult:2.8, score:88, heat:"hot",
+    sigs:[["Fleet: 5 trucks, 3 titled pre-2012","high"],["Yellow-page listing still active",""]],
+    why:"Hasn't replaced a truck since 2012. That's not poverty — it's a man who stopped reinvesting because he's counting down.",
+    script:"I'm buying one septic business in Fairfield County this year.\nYours has run 29 years without a complaint on file.\nI'm not asking you to sell. I'm asking what you'd want\nthe day you decide to." },
+
+  { name:"K——— Commercial Landscaping", city:"Westerville", trade:"Landscaping", est:1991, tenure:26,
+    rev:6.1, sde:1.24, mult:3.6, score:84, heat:"hot",
+    sigs:[["Yard lease expires Q3 2027","high"],["Reviews mention 'the owner's son'",""]],
+    why:"Lease ends in 2027 and the son left the business in 2023. The exit date is written into the paperwork.",
+    script:"Your yard lease is up in 2027 — that's usually when an owner\ndecides whether to sign another ten years or hand it off.\nI'd rather talk now than bid against four people later.\nCoffee, your side of town?" },
+
+  { name:"D——— Precision Machine", city:"Marion", trade:"Machine shop", est:1972, tenure:41,
+    rev:3.4, sde:0.68, mult:2.9, score:79, heat:"warm",
+    sigs:[["DBA registered 1972",""],["Website last updated 2016",""],["Two customers = 60% revenue","high"]],
+    why:"41 years, three CNCs, and customer concentration that scares every private equity buyer away. That's your edge, not your risk.",
+    script:"41 years is a long time to carry a shop. I'm a buyer, local,\nand I'd keep all six machinists.\nCan I walk the floor for twenty minutes some Friday?" },
+
+  { name:"S——— Fire & Alarm Inspection", city:"Dublin", trade:"Fire safety", est:1988, tenure:24,
+    rev:2.2, sde:0.63, mult:4.1, score:77, heat:"warm",
+    sigs:[["Recurring inspection contracts: 340",""],["Owner listed in 2 estate filings","high"]],
+    why:"340 recurring inspection contracts. This is a subscription business wearing a work shirt, and it's priced like a trade.",
+    script:"340 recurring contracts is the cleanest revenue in the trades.\nI'm a local buyer, cash plus a seller note,\nand I'd keep your techs and your pricing.\nWorth a conversation?" },
+
+  { name:"R——— Industrial Linen", city:"Newark", trade:"Linen", est:1969, tenure:38,
+    rev:5.5, sde:1.05, mult:3.3, score:74, heat:"warm",
+    sigs:[["Route book: 210 stops",""],["Plant permit renewed 2026",""]],
+    why:"210 route stops built over 38 years. Routes are the moat — nobody rebuilds one from scratch.",
+    script:"Your route book is the business. I'm not looking to cut it up\nor move the plant. Local buyer, keeping the plant open.\nIf you'd ever consider a transition, I'd like to be in line." },
+
+  { name:"P——— Pest Control", city:"Delaware", trade:"Pest control", est:1996, tenure:21,
+    rev:1.9, sde:0.54, mult:3.8, score:69, heat:"warm",
+    sigs:[["Quarterly plans: 1,180 homes",""],["No successor on file",""]],
+    why:"1,180 quarterly plans. Recurring, sticky, and completely unlisted.",
+    script:"1,180 recurring plans is a real business, not a route.\nI buy in Delaware County and I keep the techs.\nCan I buy you lunch and hear how you'd want it handled?" },
+
+  { name:"B——— Coin Laundry, 3 stores", city:"Whitehall", trade:"Laundromat", est:2001, tenure:17,
+    rev:1.1, sde:0.44, mult:3.2, score:64, heat:"cold",
+    sigs:[["Card system installed 2019",""],["Third store opened 2021",""]],
+    why:"Still investing — installed card readers and opened a third store. Watch list, not a call list.",
+    script:"Not selling yet, I know. Putting my name in early:\nlocal buyer, three-store operator, cash close.\nI'll check back in the spring." },
+
+  { name:"T——— Overhead Door", city:"Zanesville", trade:"HVAC", est:1986, tenure:31,
+    rev:2.6, sde:0.61, mult:2.7, score:61, heat:"cold",
+    sigs:[["Licence renewed 3-yr in 2026",""],["Daughter added as officer 2025","high"]],
+    why:"Added his daughter as an officer last year. Family succession beats you to this one — keep it warm, don't chase it.",
+    script:"Congratulations on bringing your daughter into the business.\nIf the handover ever stalls, I'm a local buyer\nand I'd rather back her than replace her." }
+];
+
+const TRADES = [...new Set(DEALS.map(d => d.trade))];
+const state = { trades:new Set(), minScore:62, maxMult:4.0, sort:"score", selected:0 };
+const $ = sel => document.querySelector(sel);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ── filters ─────────────────────────────────────────────────────────────── */
+$("#trades").innerHTML = TRADES
+  .map(t => `<button class="chip" data-trade="${t}" aria-pressed="false">${t}</button>`).join("");
+
+$("#trades").addEventListener("click", e => {
+  const chip = e.target.closest(".chip"); if (!chip) return;
+  const t = chip.dataset.trade;
+  state.trades.has(t) ? state.trades.delete(t) : state.trades.add(t);
+  chip.setAttribute("aria-pressed", String(state.trades.has(t)));
+  render();
+});
+
+$("#score").addEventListener("input", e => {
+  state.minScore = +e.target.value;
+  $("#scoreOut").textContent = state.minScore;
+  render();
+});
+
+$("#mult").addEventListener("input", e => {
+  state.maxMult = +e.target.value / 10;
+  $("#multOut").textContent = state.maxMult.toFixed(1) + "×";
+  render();
+});
+
+document.querySelectorAll(".sort").forEach(btn => btn.addEventListener("click", () => {
+  state.sort = btn.dataset.sort;
+  document.querySelectorAll(".sort").forEach(b =>
+    b.setAttribute("aria-pressed", String(b === btn)));
+  render();
+}));
+
+/* ── sell-window distribution ────────────────────────────────────────────── */
+const WINDOW = [
+  { h:38, heat:"hot",  cap:"0–3" }, { h:61, heat:"hot",  cap:"3–6" },
+  { h:88, heat:"hot",  cap:"6–9" }, { h:74, heat:"warm", cap:"9–12" },
+  { h:52, heat:"warm", cap:"12–15" }, { h:33, heat:"cold", cap:"15–18" }
+];
+$("#window").innerHTML = WINDOW.map((b, i) =>
+  `<div data-heat="${b.heat}" style="height:${b.h}%;animation-delay:${reduced ? 0 : i * 70}ms">
+     <span>${b.cap}</span></div>`).join("");
+
+/* ── rows ────────────────────────────────────────────────────────────────── */
+function visible(){
+  return DEALS
+    .filter(d => !state.trades.size || state.trades.has(d.trade))
+    .filter(d => d.score >= state.minScore)
+    .filter(d => d.mult <= state.maxMult)
+    .sort((a, b) => state.sort === "sde" ? b.sde - a.sde
+                  : state.sort === "tenure" ? b.tenure - a.tenure
+                  : b.score - a.score);
+}
+
+function render(){
+  const list = visible();
+  $("#rows").innerHTML = list.map((d, i) => `
+    <li>
+      <button class="row" data-i="${DEALS.indexOf(d)}" data-heat="${d.heat}"
+              aria-current="${DEALS.indexOf(d) === state.selected}">
+        <i class="stripe"></i>
+        <span class="who">
+          <b>${d.name}</b>
+          <span class="facts"><em>${d.city}</em> · ${d.trade} · est. ${d.est} · ${d.mult.toFixed(1)}× ask</span>
+          <span class="sigs">${d.sigs.slice(0, 2).map(([s, w]) =>
+            `<span class="sig" data-weight="${w}">${s}</span>`).join("")}${
+            d.sigs.length > 2 ? `<span class="sig">+${d.sigs.length - 2}</span>` : ""}</span>
+        </span>
+        <span class="cell hide-sm hide-md"><small>Tenure</small>${d.tenure} yr</span>
+        <span class="cell hide-sm right"><small>Revenue</small>$${d.rev.toFixed(1)}M</span>
+        <span class="cell right"><small>Earnings</small>$${d.sde < 1 ? (d.sde * 1000).toFixed(0) + "K" : d.sde.toFixed(2) + "M"}</span>
+        <span class="dial" style="--score:${d.score};--heat:var(--${d.heat})"><i class="num">${d.score}</i></span>
+        <span class="pull hide-sm hide-md">Open file</span>
+      </button>
+    </li>`).join("");
+
+  $("#empty").hidden = list.length > 0;
+  $("#count").textContent = `${list.length} of ${DEALS.length} shown`;
+
+  if (list.length && !list.some(d => DEALS.indexOf(d) === state.selected))
+    select(DEALS.indexOf(list[0]), true);
+}
+
+$("#rows").addEventListener("click", e => {
+  const row = e.target.closest(".row"); if (!row) return;
+  select(+row.dataset.i);
+});
+
+function select(i, quiet){
+  state.selected = i;
+  const d = DEALS[i];
+  $("#focusTag").textContent = `${d.trade} · ${d.city} · score ${d.score} · ask ~${d.mult.toFixed(1)}\u00d7`;
+  $("#focusName").textContent = d.name;
+  $("#focusWhy").textContent = d.why;
+  $("#focusScript").textContent = d.script;
+  const send = $("#send");
+  send.dataset.sent = "false";
+  send.textContent = "Send first touch";
+  if (!quiet) render();
+}
+
+$("#send").addEventListener("click", e => {
+  const sent = e.currentTarget.dataset.sent === "true";
+  e.currentTarget.dataset.sent = String(!sent);
+  e.currentTarget.textContent = sent ? "Send first touch" : "Queued for 7:10am";
+});
+
+/* ── headline counter ────────────────────────────────────────────────────── */
+(function count(){
+  const el = $("#big"), target = 1284;
+  if (reduced) { el.textContent = target.toLocaleString(); return; }
+  const start = performance.now(), dur = 1100;
+  const step = now => {
+    const t = Math.min(1, (now - start) / dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3))).toLocaleString();
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+})();
+
+/* ── theme ───────────────────────────────────────────────────────────────── */
+$("#theme").addEventListener("click", () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const now = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  document.documentElement.dataset.theme = now === "dark" ? "light" : "dark";
+});
+
+render();
+select(0, true);
+</script>
+</body>
+</html>
