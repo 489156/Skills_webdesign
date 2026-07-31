@@ -23,5 +23,7 @@
 ## In this repo
 
 - [ARTICLE.md](ARTICLE.md) — concept, commercialization review, business case
+- [MARKET-RESEARCH.md](MARKET-RESEARCH.md) — MECE competitive research, KR/JP/US, B2C/B2B/B2G
+- [MEETING-MINUTES.md](MEETING-MINUTES.md) — M5 strategy meeting, moat definition, verification protocol
 - [proposal/index.html](proposal/index.html) — customer use proposal
 - [succession-deal-radar](../succession-deal-radar/SKILL.md) — the predecessor pattern (business killed at gate M2, design retained)

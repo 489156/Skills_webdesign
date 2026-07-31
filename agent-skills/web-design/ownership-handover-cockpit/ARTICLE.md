@@ -1,9 +1,15 @@
 # UNDERSTUDY — Concept, Commercialization Review, and Business Case
 
-**Status:** prototype complete, direction changed at Gate M2
+**Status:** prototype complete; direction changed at M2; two claims withdrawn at M5
 **Date:** 29 July 2026
 **Predecessor:** OFFMARKET Deal Radar (killed at M2 — see §5)
 
+> **Revision note, 30 July 2026.** Market research after this document was first written
+> ([MARKET-RESEARCH.md](MARKET-RESEARCH.md)) invalidated the lender-channel thesis and showed the
+> capture mechanic is already commoditized in consumer products. Affected passages are marked
+> ⚠ **WITHDRAWN** below rather than deleted, so the reasoning error stays visible. Strategy
+> revisions are in [MEETING-MINUTES.md](MEETING-MINUTES.md).
+>
 > All financial figures in this document are **modeled assumptions**, labeled as such.
 > Nothing here is measured revenue. The market-size and transition-volume figures are
 > sourced in [REFERENCES.md](REFERENCES.md); everything derived from them is our model.
@@ -67,7 +73,8 @@ Each persona holds a veto on their domain. "Kills" are the things they will not 
 | M1 | Identity & ICP lock | One identity sentence, one named ICP, a demand mechanism that isn't market size | **Failed twice, then passed** |
 | M2 | Stricter feasibility gate | Survive unit economics + legal + retention | **FAILED — direction changed** |
 | M3 | Prototype implementation | Screens a real buyer can operate | Done — 3 views, shipped |
-| M4 | Documentation + proposal | Submittable to a named customer | This document + [PROPOSAL.md](PROPOSAL.md) |
+| M4 | Documentation + proposal | Submittable to a named customer | This document + [proposal](proposal/index.html) |
+| M5 | **Market research + strategy** | Prove the square is empty; find prior art | **Two claims invalidated** — [MARKET-RESEARCH.md](MARKET-RESEARCH.md), [MEETING-MINUTES.md](MEETING-MINUTES.md) |
 
 ---
 
@@ -161,7 +168,7 @@ protects my book. That's not a referral favor. That's underwriting."
 | Sold to | Searchers, pre-close | New owners, at and after close |
 | Bought with | Personal credit card | Deal proceeds / working capital in the loan |
 | Success means | Customer leaves | Customer becomes an operating subscriber |
-| Channel | Content only | Lenders, brokers, SBDCs (**incentive-aligned**) |
+| Channel | Content only | ⚠ Originally "lenders, brokers, SBDCs (incentive-aligned)" — **withdrawn.** Content-led, direct-to-buyer |
 | Network effect | Negative in-market | Positive: each engagement improves capture models |
 | Consent | Absent by design | Signed by the owner, revocable, on-screen |
 
@@ -174,7 +181,7 @@ protects my book. That's not a referral favor. That's underwriting."
 | Marginal cost per market | Near zero | National from day one — no per-county data | Pass |
 | Network effect | Positive | Trade-specific capture playbooks compound | Pass |
 | Legal object | Not a natural person | Business operating knowledge, with consent | Pass |
-| Channel with aligned incentive | Exists | Lender default-reduction | **Strong pass** |
+| Channel with aligned incentive | Exists | ⚠ Lender default-reduction **withdrawn** — no default problem exists to solve at 0.71%. Channel now unproven | **Downgraded to open** |
 | Gross margin | ≥ 65% | 68–74% engagement / 86% subscription | Pass (thin) |
 
 **Sunhee Cho:** "I can sign this, with three conditions." → all three were built into the
@@ -197,9 +204,11 @@ Market size is not a demand mechanism. These four are:
    most lower-middle-market deals — meaning the parties have *already agreed in writing* that
    knowledge must transfer. Today that obligation is discharged with "call me if you have
    questions." We are the instrument that discharges it.
-2. **An underwriter's financial interest.** Lender defaults cluster in months 6–18 post-close.
-   A lender that believes we reduce that has a reason to require us, and lenders requiring a
-   vendor is the fastest distribution in small business. This is the multiplier.
+2. ⚠ **WITHDRAWN — "an underwriter's financial interest."** The original claim was that lender
+   defaults cluster in months 6–18 and a lender would therefore require us. Acquisition loans
+   default at ~0.71% with a 4.1-year median. **No demand multiplier exists here.** What replaces
+   it: nothing yet. The revised plan (MEETING-MINUTES.md §4) treats distribution as unsolved and
+   builds technical advantage first rather than assuming a channel.
 3. **Payment timing.** Our fee is spent from closing proceeds, at the one moment in the
    customer's life when capital is allocated and a wire is already going out. We are a line on
    a closing statement, not a subscription he has to re-justify each month.
@@ -311,7 +320,10 @@ things on the screen are risks. Calm is the absence of color."
 | QA hours per engagement creep | **Highest** | Instrument from engagement 1; trade-specific extraction templates | >14 hrs average at engagement 50 → re-price or stop selling |
 | Owners refuse to be recorded | High | Owner incentive payment; revocation window; owner-first framing (build 2) | <55% owner consent rate across first 30 deals |
 | Engagement doesn't convert to subscription | High | Crew view live before day 90 so the habit forms pre-renewal | <45% day-91 conversion at n=50 |
-| Lender channel doesn't materialize | High | Two lender pilots before scaling content spend | No signed pilot by month 5 |
+| ⚠ ~~Lender channel doesn't materialize~~ | — | **Resolved by being wrong.** The channel had no economic basis; withdrawn before any effort was spent | Closed |
+| **No proven channel at all** | **Highest, replacing the above** | Content is the only channel needing no external party; sequenced after the V3 engine test | No repeatable acquisition path by month 9 post-V3 |
+| Elicitation advantage doesn't exist | **Existential** | Formal synthetic benchmark, ground truth sealed before the engine is written | **K1:** treatment fails 1.4× CRR *and* 3× ERR → stop |
+| Mechanic commoditized by consumer products | Medium | Never lead with capture; lead with ranking. Moat is T1/T2/T3 | Competitor ships consequence-ranked elicitation first |
 | FSM incumbent bundles this | Medium | The founder's voice archive is not reproducible after the owner leaves; we are the system of record for the *past* | — |
 | Services-margin trap | Medium | Hard 65% GM floor per engagement | Two consecutive quarters <65% |
 
@@ -326,9 +338,12 @@ so on the record rather than discovering it in year three.
 
 1. **Owner-first onboarding view** (Bud's ask) — the largest gap. Build 2.
 2. **Coverage benchmark band** — "what number means I'm safe." Build 2.
-3. **Lender monthly report** — one page per borrower. Build 2, required for the pilot.
+3. ⚠ ~~**Lender monthly report**~~ — dropped with the channel.
 4. **B2G outcome reporting** — jobs retained per business. Year 2.
 5. Live voice pipeline, retention/deletion tooling, seller-note milestone integration.
+6. **V1–V3: the HVAC ontology, the elicitation policy engine, and the synthetic-owner benchmark.**
+   This is now the top of the queue — it tests whether the company has a reason to exist.
+   Specification in [MEETING-MINUTES.md](MEETING-MINUTES.md) §5.
 
 ---
 
